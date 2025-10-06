@@ -1,0 +1,21 @@
+{
+  "name": "pruebanode",
+  "version": "1.0.0",
+  "description": "prueba de sistema de prestamos",
+  "main": "app.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon app node"
+  },
+  "author": "Milton Cesar Vargas Moreno",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "mongoose": "^8.19.0",
+    "nodemon": "^3.1.10",
+    "pg": "^8.16.3",
+    "sequelize": "^6.37.7"
+  }
+}
