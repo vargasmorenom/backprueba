@@ -1,0 +1,164 @@
+-- Table: public.creditos
+
+-- DROP TABLE IF EXISTS public.creditos;
+
+CREATE TABLE IF NOT EXISTS public.creditos
+(
+    id integer NOT NULL DEFAULT nextval('creditos_id_seq'::regclass),
+    id_prestamista integer NOT NULL,
+    id_prestatario integer NOT NULL,
+    monto_prestamo numeric(12,2) NOT NULL,
+    tasa_interes numeric(5,2) NOT NULL,
+    fecha_prestamo date DEFAULT CURRENT_DATE,
+    periodo_prestamos integer NOT NULL,
+    dia_pago integer NOT NULL,
+    estate boolean NOT NULL DEFAULT true,
+    CONSTRAINT creditos_pkey PRIMARY KEY (id),
+    CONSTRAINT creditos_id_prestamista_fkey FOREIGN KEY (id_prestamista)
+        REFERENCES public.users (id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT creditos_id_prestatario_fkey FOREIGN KEY (id_prestatario)
+        REFERENCES public.users (id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT creditos_monto_prestamo_check CHECK (monto_prestamo > 0::numeric),
+    CONSTRAINT creditos_tasa_interes_check CHECK (tasa_interes >= 0::numeric),
+    CONSTRAINT creditos_periodo_prestamos_check CHECK (periodo_prestamos > 0),
+    CONSTRAINT creditos_dia_pago_check CHECK (dia_pago >= 1 AND dia_pago <= 31)
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS public.creditos
+    OWNER to milton;
+    -- Table: public.fondos_users
+
+-- DROP TABLE IF EXISTS public.fondos_users;
+
+CREATE TABLE IF NOT EXISTS public.fondos_users
+(
+    id integer NOT NULL DEFAULT nextval('fondos_users_id_seq'::regclass),
+    user_id integer NOT NULL,
+    fondo numeric(12,2) NOT NULL DEFAULT 0.00,
+    estate boolean NOT NULL DEFAULT true,
+    CONSTRAINT fondos_users_pkey PRIMARY KEY (id),
+    CONSTRAINT fondos_users_user_id_fkey FOREIGN KEY (user_id)
+        REFERENCES public.users (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE CASCADE
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS public.fondos_users
+    OWNER to milton;
+    
+    
+-- Table: public.movimientos_fondos
+
+-- DROP TABLE IF EXISTS public.movimientos_fondos;
+
+CREATE TABLE IF NOT EXISTS public.movimientos_fondos
+(
+    id integer NOT NULL DEFAULT nextval('movimientos_fondos_id_seq'::regclass),
+    fondo_user_id integer,
+    tipo_movimiento_id integer NOT NULL,
+    monto numeric(12,2) NOT NULL DEFAULT 0.00,
+    fecha_movimiento timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    estate boolean NOT NULL DEFAULT true,
+    CONSTRAINT movimientos_fondos_pkey PRIMARY KEY (id),
+    CONSTRAINT movimientos_fondos_fondo_user_id_fkey FOREIGN KEY (fondo_user_id)
+        REFERENCES public.fondos_users (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE SET NULL,
+    CONSTRAINT movimientos_fondos_tipo_movimiento_id_fkey FOREIGN KEY (tipo_movimiento_id)
+        REFERENCES public.tipos_movimientos (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS public.movimientos_fondos
+    OWNER to milton;
+
+-- Trigger: trigger_actualizar_fondo
+
+-- DROP TRIGGER IF EXISTS trigger_actualizar_fondo ON public.movimientos_fondos;
+
+CREATE OR REPLACE TRIGGER trigger_actualizar_fondo
+    AFTER INSERT
+    ON public.movimientos_fondos
+    FOR EACH ROW
+    EXECUTE FUNCTION public.actualizar_fondo();
+    
+    
+    
+-- Table: public.pagos_credito
+
+-- DROP TABLE IF EXISTS public.pagos_credito;
+
+CREATE TABLE IF NOT EXISTS public.pagos_credito
+(
+    id integer NOT NULL DEFAULT nextval('pagos_credito_id_seq'::regclass),
+    id_credito integer NOT NULL,
+    monto_pagado numeric(12,2) NOT NULL,
+    fecha_pago timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    metodo_pago character varying(50) COLLATE pg_catalog."default",
+    observaciones text COLLATE pg_catalog."default",
+    CONSTRAINT pagos_credito_pkey PRIMARY KEY (id),
+    CONSTRAINT pagos_credito_id_credito_fkey FOREIGN KEY (id_credito)
+        REFERENCES public.creditos (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE CASCADE,
+    CONSTRAINT pagos_credito_monto_pagado_check CHECK (monto_pagado > 0::numeric)
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS public.pagos_credito
+    OWNER to milton;
+    
+    
+-- Table: public.tipos_movimientos
+
+-- DROP TABLE IF EXISTS public.tipos_movimientos;
+
+CREATE TABLE IF NOT EXISTS public.tipos_movimientos
+(
+    id integer NOT NULL DEFAULT nextval('tipos_movimientos_id_seq'::regclass),
+    nombre character varying(50) COLLATE pg_catalog."default" NOT NULL,
+    descripcion text COLLATE pg_catalog."default",
+    estate boolean DEFAULT true,
+    CONSTRAINT tipos_movimientos_pkey PRIMARY KEY (id)
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS public.tipos_movimientos
+    OWNER to milton;
+    
+    
+-- Table: public.users
+
+-- DROP TABLE IF EXISTS public.users;
+
+CREATE TABLE IF NOT EXISTS public.users
+(
+    id integer NOT NULL DEFAULT nextval('users_id_seq'::regclass),
+    name character varying(100) COLLATE pg_catalog."default" NOT NULL,
+    lastname character varying(100) COLLATE pg_catalog."default" NOT NULL,
+    phonenumber character varying(20) COLLATE pg_catalog."default",
+    email character varying(100) COLLATE pg_catalog."default" NOT NULL,
+    estate boolean DEFAULT true,
+    CONSTRAINT users_pkey PRIMARY KEY (id),
+    CONSTRAINT users_email_key UNIQUE (email)
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS public.users
+    OWNER to milton;
+
+
